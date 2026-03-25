@@ -1,17 +1,39 @@
 PREFIX ?= /usr/local
 BINARY = apfel
 
-.PHONY: build install uninstall clean version-bump
+.PHONY: build install uninstall clean version-bump reinstall all
+
+all: reinstall
 
 build:
 	swift build -c release
 
 install: build
-	install -d $(PREFIX)/bin
-	install .build/release/$(BINARY) $(PREFIX)/bin/$(BINARY)
+	@if [ -w "$(PREFIX)/bin" ]; then \
+		install .build/release/$(BINARY) $(PREFIX)/bin/$(BINARY); \
+	else \
+		sudo install .build/release/$(BINARY) $(PREFIX)/bin/$(BINARY); \
+	fi
+	@echo "✓ installed: $$($(PREFIX)/bin/$(BINARY) --version)"
+
+reinstall:
+	@pkill -f "apfel --serve" 2>/dev/null || true
+	@pkill -f "apfel --gui" 2>/dev/null || true
+	@sleep 1
+	swift build -c release
+	@if [ -w "$(PREFIX)/bin" ]; then \
+		install .build/release/$(BINARY) $(PREFIX)/bin/$(BINARY); \
+	else \
+		sudo install .build/release/$(BINARY) $(PREFIX)/bin/$(BINARY); \
+	fi
+	@echo "✓ installed: $$($(PREFIX)/bin/$(BINARY) --version)"
 
 uninstall:
-	rm -f $(PREFIX)/bin/$(BINARY)
+	@if [ -w "$(PREFIX)/bin" ]; then \
+		rm -f $(PREFIX)/bin/$(BINARY); \
+	else \
+		sudo rm -f $(PREFIX)/bin/$(BINARY); \
+	fi
 
 clean:
 	swift package clean
