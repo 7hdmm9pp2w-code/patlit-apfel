@@ -80,8 +80,19 @@ struct ChatView: View {
                 .help(viewModel.speakEnabled ? "Speech on — click to mute" : "Speech off — click to enable")
                 .onHover { h in if h { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
 
+                // Microphone button
+                Button(action: { viewModel.toggleListening() }) {
+                    Image(systemName: viewModel.stt.isListening ? "mic.circle.fill" : "mic")
+                        .font(.body)
+                        .foregroundColor(viewModel.stt.isListening ? .red : .gray)
+                        .symbolEffect(.pulse, isActive: viewModel.stt.isListening)
+                }
+                .buttonStyle(.borderless)
+                .help(viewModel.stt.isListening ? "Stop listening" : "Start voice input")
+                .onHover { h in if h { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
+
                 // Text input
-                TextField("Type a message, press Enter to send...", text: $viewModel.currentInput)
+                TextField(viewModel.stt.isListening ? "Listening..." : "Type a message, press Enter to send...", text: $viewModel.currentInput)
                     .textFieldStyle(.roundedBorder)
                     .font(.body)
                     .focused($focusedField, equals: .messageInput)

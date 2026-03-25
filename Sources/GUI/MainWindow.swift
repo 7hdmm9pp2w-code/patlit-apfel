@@ -38,6 +38,12 @@ struct MainWindow: View {
                 .keyboardShortcut("k", modifiers: .command)
                 .help("Clear chat (Cmd+K)")
 
+                Button(action: { viewModel.showSelfDiscussion = true }) {
+                    Label("Self-Discuss", systemImage: "bubble.left.and.bubble.right")
+                }
+                .help("AI debates itself on a topic")
+                .disabled(viewModel.isSelfDiscussing)
+
                 Divider()
 
                 Toggle(isOn: $viewModel.showDebugPanel) {
@@ -54,5 +60,8 @@ struct MainWindow: View {
             }
         }
         .frame(minWidth: 700, minHeight: 500)
+        .sheet(isPresented: $viewModel.showSelfDiscussion) {
+            SelfDiscussionView(viewModel: viewModel)
+        }
     }
 }

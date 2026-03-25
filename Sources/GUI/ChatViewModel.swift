@@ -34,9 +34,12 @@ class ChatViewModel {
     var showLogPanel: Bool = true
     var debugAutoFollow: Bool = true
     var speakEnabled: Bool = false
+    var isSelfDiscussing: Bool = false
+    var showSelfDiscussion: Bool = false
 
     let apiClient: APIClient
     let tts = TTSManager()
+    let stt = STTManager()
 
     init(apiClient: APIClient) {
         self.apiClient = apiClient
@@ -153,5 +156,114 @@ class ChatViewModel {
             .replacingOccurrences(of: "\n", with: "\\n")
             .replacingOccurrences(of: "\t", with: "\\t")
         return "\"\(escaped)\""
+    }
+
+    // MARK: - Voice Input
+
+    func toggleListening() {
+        if stt.isListening {
+            let transcript = stt.stopListening()
+            if !transcript.isEmpty {
+                currentInput += (currentInput.isEmpty ? "" : " ") + transcript
+            }
+        } else {
+            Task {
+                let authorized = await stt.requestPermissions()
+                if authorized {
+                    stt.startListening()
+                } else {
+                    errorMessage = "Microphone permission denied"
+                }
+            }
+        }
+    }
+
+    // MARK: - Self-Discussion
+
+    /// AI debates itself for N turns on a topic, alternating between two system prompts.
+    func startSelfDiscussion(topic: String, turns: Int, systemA: String, systemB: String) async {
+        guard !isSelfDiscussing else { return }
+        isSelfDiscussing = true
+        isStreaming = true
+
+        // Add the topic as a user message
+        let topicMsg = ChatMsg(
+            id: UUID().uuidString,
+            role: "user",
+            content: "Topic: \(topic)",
+            timestamp: Date()
+        )
+        messages.append(topicMsg)
+
+        var previousResponse = topic
+
+        for turn in 1...turns {
+            let isA = turn % 2 == 1
+            let systemPromptForTurn = isA ? systemA : systemB
+            let label = isA ? "Perspective A" : "Perspective B"
+
+            // Create assistant placeholder
+            let msgId = UUID().uuidString
+            messages.append(ChatMsg(
+                id: msgId,
+                role: "assistant",
+                content: "",
+                timestamp: Date(),
+                isStreaming: true
+            ))
+
+            let prompt = turn == 1
+                ? topic
+                : "The previous speaker said: \"\(previousResponse)\"\n\nNow respond to this."
+
+            let history: [(role: String, content: String)] = [(role: "user", content: prompt)]
+            let (stream, requestJSON) = apiClient.streamChatCompletion(
+                messages: history,
+                systemPrompt: systemPromptForTurn
+            )
+
+            updateMessage(id: msgId) { $0.requestJSON = requestJSON }
+
+            let start = Date()
+            do {
+                for try await delta in stream {
+                    updateMessage(id: msgId) { $0.content += delta }
+                }
+
+                let durationMs = Int(Date().timeIntervalSince(start) * 1000)
+                let rawResponse = APIClient.lastRawSSEResponse
+                updateMessage(id: msgId) { msg in
+                    msg.isStreaming = false
+                    msg.durationMs = durationMs
+                    msg.tokenCount = max(1, msg.content.count / 4)
+                    msg.responseJSON = rawResponse
+                }
+
+                previousResponse = messages.first(where: { $0.id == msgId })?.content ?? ""
+
+                if debugAutoFollow {
+                    selectedMessageId = msgId
+                }
+
+                // Speak if enabled
+                if speakEnabled, !previousResponse.isEmpty {
+                    tts.speak(previousResponse)
+                    // Wait for speech to finish before next turn
+                    while tts.isSpeaking {
+                        try? await Task.sleep(for: .milliseconds(200))
+                    }
+                }
+
+            } catch {
+                updateMessage(id: msgId) { msg in
+                    msg.content = "Error: \(error.localizedDescription)"
+                    msg.isStreaming = false
+                }
+                break
+            }
+        }
+
+        isSelfDiscussing = false
+        isStreaming = false
     }
 }
