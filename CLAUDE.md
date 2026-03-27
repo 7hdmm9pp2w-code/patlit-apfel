@@ -53,14 +53,14 @@ GUI (SwiftUI) ─── HTTP ────┘   SchemaConverter → DynamicGenera
 
 - `ApfelCore` library: pure Swift, no FoundationModels dependency, unit-testable
 - Main target: FoundationModels integration, Hummingbird HTTP server
-- Tests: `swift run apfel-tests` (executable runner, no XCTest needed)
+- Tests: `swift run apfel-tests` (pure Swift runner, no XCTest needed)
 
 ## Build & Test
 
 ```bash
 make install                   # build release + install to /usr/local/bin
 swift build                    # debug build only
-swift run apfel-tests          # run 32 unit tests
+swift run apfel-tests          # run pure Swift unit tests
 apfel "Hello"                  # single prompt (after make install)
 apfel --serve                  # start server on :11434
 ```
@@ -69,7 +69,7 @@ apfel --serve                  # start server on :11434
 
 Integration tests (requires server running):
 ```bash
-python3 -m pytest Tests/integration/ -v    # 34 integration tests
+python3 -m pytest Tests/integration/ -v    # release-binary integration tests
 ```
 
 ## Key Files

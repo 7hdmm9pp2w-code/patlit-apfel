@@ -146,11 +146,16 @@ func chat(systemPrompt: String?, options: SessionOptions = .defaults) async thro
             let tokenCount = await TokenCounter.shared.count(entries: Array(Array(transcript)))
             let budget = await TokenCounter.shared.inputBudget(reservedForOutput: 512)
             if tokenCount > budget {
-                // Truncate: keep instructions + newest turns that fit
-                let truncated = truncateTranscript(transcript, budget: budget)
-                session = LanguageModelSession(model: model, transcript: truncated)
-                if !quietMode && outputFormat == .plain {
-                    print(styled("  [context rotated — oldest messages trimmed]", .dim))
+                do {
+                    let truncated = try await truncateTranscript(transcript, budget: budget)
+                    session = LanguageModelSession(model: model, transcript: truncated)
+                    if !quietMode && outputFormat == .plain {
+                        print(styled("  [context rotated — oldest messages trimmed]", .dim))
+                    }
+                } catch {
+                    let classified = ApfelError.classify(error)
+                    printError("\(classified.cliLabel) \(classified.openAIMessage)")
+                    break
                 }
             }
         } catch {
@@ -173,53 +178,29 @@ func chat(systemPrompt: String?, options: SessionOptions = .defaults) async thro
 
 /// Truncate a transcript to fit within the token budget.
 /// Keeps instructions + newest turns that fit.
-func truncateTranscript(_ transcript: Transcript, budget: Int) -> Transcript {
+func truncateTranscript(_ transcript: Transcript, budget: Int) async throws -> Transcript {
     let entries = Array(Array(transcript))
     guard !entries.isEmpty else { return transcript }
 
-    var kept: [Transcript.Entry] = []
-    var used = 0
-
-    // Always keep instructions (first entry if present)
+    let baseEntries: [Transcript.Entry]
+    let historyEntries: [Transcript.Entry]
     if case .instructions = entries.first {
-        kept.append(entries.first!)
-        // Rough estimate for instructions
-        used += 200
+        baseEntries = [entries.first!]
+        historyEntries = Array(entries.dropFirst())
+    } else {
+        baseEntries = []
+        historyEntries = entries
     }
 
-    // Walk remaining entries newest-first, keep what fits
-    let historyEntries = entries.dropFirst()
-    var reversedKept: [Transcript.Entry] = []
-    for entry in historyEntries.reversed() {
-        let estimate: Int
-        switch entry {
-        case .prompt(let p):
-            estimate = p.segments.reduce(0) { sum, seg in
-                if case .text(let t) = seg { return sum + max(1, t.content.count / 4) }
-                return sum + 10
-            }
-        case .response(let r):
-            estimate = r.segments.reduce(0) { sum, seg in
-                if case .text(let t) = seg { return sum + max(1, t.content.count / 4) }
-                return sum + 10
-            }
-        case .toolCalls(let tc):
-            estimate = tc.count * 20
-        case .toolOutput(let o):
-            estimate = o.segments.reduce(0) { sum, seg in
-                if case .text(let t) = seg { return sum + max(1, t.content.count / 4) }
-                return sum + 10
-            }
-        default:
-            estimate = 10
-        }
-        if used + estimate > budget { break }
-        used += estimate
-        reversedKept.insert(entry, at: 0)
+    guard let trimmed = await trimHistoryEntriesToBudget(
+        baseEntries: baseEntries,
+        historyEntries: historyEntries,
+        budget: budget
+    ) else {
+        throw ApfelError.contextOverflow
     }
 
-    kept.append(contentsOf: reversedKept)
-    return Transcript(entries: kept)
+    return Transcript(entries: trimmed)
 }
 
 // MARK: - Model Info

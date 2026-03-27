@@ -242,6 +242,12 @@ def chat_stream(messages, **kwargs):
     return chunks
 
 
+def assert_invalid_request(status, data, keyword):
+    assert status == 400
+    validate(instance=data, schema=ERROR_RESPONSE_SCHEMA)
+    assert keyword in data["error"]["message"]
+
+
 # ============================================================================
 # Tests — Prerequisite
 # ============================================================================
@@ -355,6 +361,7 @@ def test_tool_call_response_schema():
         [{"role": "user", "content": "Use the provided weather function for Vienna. Do not answer directly."}],
         tools=tools,
         tool_choice={"type": "function", "function": {"name": "get_weather"}},
+        seed=1,
     )
     assert status == 200
     validate(instance=data, schema=CHAT_COMPLETION_SCHEMA)
@@ -413,6 +420,50 @@ def test_error_image_rejection_schema():
     }])
     assert status == 400
     validate(instance=data, schema=ERROR_RESPONSE_SCHEMA)
+
+
+def test_error_unsupported_n_schema():
+    """n > 1 is rejected explicitly."""
+    status, data = chat([{"role": "user", "content": "Hello."}], n=2)
+    assert_invalid_request(status, data, "'n'")
+
+
+def test_error_unsupported_logprobs_schema():
+    """logprobs=true is rejected explicitly."""
+    status, data = chat([{"role": "user", "content": "Hello."}], logprobs=True)
+    assert_invalid_request(status, data, "'logprobs'")
+
+
+def test_error_unsupported_stop_schema():
+    """stop is rejected explicitly."""
+    status, data = chat([{"role": "user", "content": "Hello."}], stop=["END"])
+    assert_invalid_request(status, data, "'stop'")
+
+
+def test_error_unsupported_presence_penalty_schema():
+    """presence_penalty is rejected explicitly."""
+    status, data = chat([{"role": "user", "content": "Hello."}], presence_penalty=0.5)
+    assert_invalid_request(status, data, "'presence_penalty'")
+
+
+def test_error_unsupported_frequency_penalty_schema():
+    """frequency_penalty is rejected explicitly."""
+    status, data = chat([{"role": "user", "content": "Hello."}], frequency_penalty=0.5)
+    assert_invalid_request(status, data, "'frequency_penalty'")
+
+
+def test_n_one_is_accepted():
+    """n=1 is accepted as the only supported value."""
+    status, data = chat([{"role": "user", "content": "Say hi."}], n=1)
+    assert status == 200
+    validate(instance=data, schema=CHAT_COMPLETION_SCHEMA)
+
+
+def test_logprobs_false_is_accepted():
+    """logprobs=false is accepted as a no-op."""
+    status, data = chat([{"role": "user", "content": "Say hi."}], logprobs=False)
+    assert status == 200
+    validate(instance=data, schema=CHAT_COMPLETION_SCHEMA)
 
 
 # ============================================================================

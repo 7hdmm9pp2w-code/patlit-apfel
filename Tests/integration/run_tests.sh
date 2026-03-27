@@ -21,7 +21,7 @@ for i in {1..10}; do
 done
 
 echo "Running tests..."
-python3 -m pytest Tests/integration/openai_client_test.py Tests/integration/openapi_spec_test.py -v
+python3 -m pytest Tests/integration/cli_e2e_test.py Tests/integration/openai_client_test.py Tests/integration/openapi_spec_test.py -v
 TEST_EXIT=$?
 
 echo "Stopping server..."

@@ -128,7 +128,8 @@ def test_tool_calling():
         model=MODEL,
         messages=[{"role": "user", "content": "Use the provided weather function for Vienna. Do not answer directly."}],
         tools=tools,
-        tool_choice={"type": "function", "function": {"name": "get_weather"}}
+        tool_choice={"type": "function", "function": {"name": "get_weather"}},
+        seed=1,
     )
     assert resp.choices[0].finish_reason == "tool_calls"
     assert len(resp.choices[0].message.tool_calls) > 0

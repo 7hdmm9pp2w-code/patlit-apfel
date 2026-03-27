@@ -71,7 +71,7 @@ func startServer(config: ServerConfig) async throws {
                 context_window: contextSize,
                 supported_parameters: ["temperature", "max_tokens", "seed", "stream", "tools", "tool_choice", "response_format"],
                 unsupported_parameters: ["logprobs", "n", "stop", "presence_penalty", "frequency_penalty"],
-                notes: "Apple on-device model via FoundationModels framework. Supported languages: \(langs.joined(separator: ", "))"
+                notes: "Apple on-device model via FoundationModels framework. Unsupported parameters are rejected with 400 when present (except n=1 and logprobs=false). Supported languages: \(langs.joined(separator: ", "))"
             )]
         )))
     }

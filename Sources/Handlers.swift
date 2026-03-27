@@ -49,6 +49,14 @@ func handleChatCompletion(_ request: Request, context: some RequestContext) asyn
                                  responseBody: msg, events: events + ["validation failed: empty messages"]))
     }
 
+    if let unsupported = unsupportedParameter(in: chatRequest) {
+        return (openAIError(status: .badRequest, message: unsupported.message, type: "invalid_request_error"),
+                ChatRequestTrace(stream: chatRequest.stream == true, estimatedTokens: nil, error: unsupported.message,
+                                 requestBody: truncateForLog(requestBodyString),
+                                 responseBody: unsupported.message,
+                                 events: events + ["validation failed: unsupported parameter \(unsupported.name)"]))
+    }
+
     // Validate: last message must be user or tool (tool = standard tool-calling flow)
     guard ["user", "tool"].contains(chatRequest.messages.last?.role) else {
         let msg = "Last message must have role 'user' or 'tool'"
@@ -362,6 +370,50 @@ final class TraceBuffer: @unchecked Sendable {
     func snapshot() -> [String] {
         lock.lock(); defer { lock.unlock() }; return events
     }
+}
+
+private struct UnsupportedParameter {
+    let name: String
+    let message: String
+}
+
+private func unsupportedParameter(in request: ChatCompletionRequest) -> UnsupportedParameter? {
+    if request.logprobs == true {
+        return UnsupportedParameter(
+            name: "logprobs",
+            message: "Parameter 'logprobs' is not supported by Apple's on-device model."
+        )
+    }
+
+    if let n = request.n, n != 1 {
+        return UnsupportedParameter(
+            name: "n",
+            message: "Parameter 'n' is not supported by Apple's on-device model. Only n=1 is allowed."
+        )
+    }
+
+    if request.stop != nil {
+        return UnsupportedParameter(
+            name: "stop",
+            message: "Parameter 'stop' is not supported by Apple's on-device model."
+        )
+    }
+
+    if request.presence_penalty != nil {
+        return UnsupportedParameter(
+            name: "presence_penalty",
+            message: "Parameter 'presence_penalty' is not supported by Apple's on-device model."
+        )
+    }
+
+    if request.frequency_penalty != nil {
+        return UnsupportedParameter(
+            name: "frequency_penalty",
+            message: "Parameter 'frequency_penalty' is not supported by Apple's on-device model."
+        )
+    }
+
+    return nil
 }
 
 // MARK: - Error Helper

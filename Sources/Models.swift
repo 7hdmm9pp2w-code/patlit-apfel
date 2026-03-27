@@ -35,9 +35,12 @@ struct ChatCompletionRequest: Decodable, Sendable {
     let tools: [OpenAITool]?
     let tool_choice: ToolChoice?
     let response_format: ResponseFormat?
-    // Accepted but ignored:
+    // Recognized for compatibility / explicit validation:
     let logprobs: Bool?
     let n: Int?
+    let stop: RawJSON?
+    let presence_penalty: Double?
+    let frequency_penalty: Double?
     let user: String?
 }
 

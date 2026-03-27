@@ -7,7 +7,7 @@
 
 Use the **FREE** local Apple Intelligence LLM on your Mac - your model, your machine, your way.
 
-No API keys. No cloud. No subscriptions. No rate limits. The AI is already on your computer - apfel lets you use it.
+No API keys. No cloud. No subscriptions. No per-token billing. The AI is already on your computer - apfel lets you use it.
 
 ## What is this
 
@@ -17,7 +17,7 @@ Every Mac with Apple Silicon has a **built-in LLM** - Apple's on-device foundati
 - **OpenAI-compatible server** - `apfel --serve` - drop-in replacement at `localhost:11434`, works with any OpenAI SDK
 - **Debug GUI** - `apfel --gui` - native SwiftUI inspector for requests, responses, and streaming events
 - **Tool calling** - function calling with schema conversion, full round-trip support
-- **Zero cost** - no API keys, no cloud, no subscriptions, no rate limits, 4096-token context window
+- **Zero cost** - no API keys, no cloud, no subscriptions, 4096-token context window
 
 ![apfel CLI](screenshots/cli.png)
 
@@ -157,7 +157,7 @@ Also in `demo/`:
 | CORS | Supported | Enable with `--cors` |
 | `POST /v1/completions` | 501 | Legacy text completions not supported |
 | `POST /v1/embeddings` | 501 | Embeddings not available on-device |
-| `logprobs`, `n`, `stop` | Ignored | Not supported by Apple's model |
+| `logprobs=true`, `n>1`, `stop`, `presence_penalty`, `frequency_penalty` | 400 | Rejected explicitly. `n=1` and `logprobs=false` are accepted as no-ops |
 | Multi-modal (images) | 400 | Rejected with clear error |
 | `Authorization` header | Accepted | Ignored (no auth needed for localhost) |
 
@@ -246,8 +246,8 @@ Built with Swift 6.3 strict concurrency. Single `Package.swift`, three targets:
 
 ```bash
 swift build                              # debug build
-swift run apfel-tests                    # 28 unit tests
-bash Tests/integration/run_tests.sh      # 33 integration tests (needs server)
+swift run apfel-tests                    # pure Swift unit tests
+bash Tests/integration/run_tests.sh      # release-binary integration tests
 ```
 
 ## Examples
