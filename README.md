@@ -164,20 +164,8 @@ demo/cmd -c "list open ports"                   # -c = copy to clipboard
 **Shell function version** - add to your `.zshrc` and use `cmd` from anywhere:
 
 ```bash
-# cmd — natural language to shell command (apfel)
-cmd() {
-  local x=false c=false
-  while [[ "$1" == -* ]]; do
-    case "$1" in -x) x=true; shift;; -c) c=true; shift;; *) break;; esac
-  done
-  local r=$(apfel -q -s 'Output ONLY a shell command. No explanation, no markdown, no comments, no extra text. Just the command.' "$*" | sed '/^```/d;/^#/d;s/^[[:space:]]*//;/^$/d' | head -1)
-  [[ -z "$r" ]] && echo "no command generated" && return 1
-  printf '\e[32m$\e[0m %s\n' "$r"
-  $c && printf '%s' "$r" | pbcopy && echo "(copied)"
-  if $x; then
-    printf 'Run? [y/N] '; read -r a; [[ "$a" == y ]] && eval "$r"
-  fi
-}
+# cmd — natural language to shell command (apfel). Add to .zshrc:
+cmd(){ local x c r a; while [[ $1 == -* ]]; do case $1 in -x)x=1;shift;; -c)c=1;shift;; *)break;; esac; done; r=$(apfel -q -s 'Output only a shell command.' "$*" | sed '/^```/d;/^#/d;s/^[[:space:]]*//;/^$/d' | head -1); [[ $r ]] || { echo "no command generated"; return 1; }; printf '\e[32m$\e[0m %s\n' "$r"; [[ $c ]] && printf %s "$r" | pbcopy && echo "(copied)"; [[ $x ]] && { printf 'Run? [y/N] '; read -r a; [[ $a == y ]] && eval "$r"; }; return 0; }
 ```
 
 ```bash
