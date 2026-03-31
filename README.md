@@ -161,22 +161,22 @@ demo/cmd -x "show disk usage sorted by size"   # -x = execute after confirm
 demo/cmd -c "list open ports"                   # -c = copy to clipboard
 ```
 
-**One-liner version** - add to your `.zshrc` and use `ai` from anywhere:
+**One-liner version** - add to your `.zshrc` and use `cmd` from anywhere:
 
 ```bash
-ai() { r=$(apfel -q -s 'Reply ONLY with a shell command. No markdown, no explanation.' "$*" | sed '/^```/d;s/^[[:space:]]*//;/^$/d'); printf '\e[32m$\e[0m %s\n' "$r"; printf '%s' "$r" | pbcopy; read -rp 'Run? [y/N] ' a && [[ $a == y ]] && eval "$r"; }
+cmd() { r=$(apfel -q -s 'Reply ONLY with a shell command. No markdown, no explanation.' "$*" | sed '/^```/d;s/^[[:space:]]*//;/^$/d'); printf '\e[32m$\e[0m %s\n' "$r"; printf '%s' "$r" | pbcopy; read -rp 'Run? [y/N] ' a && [[ $a == y ]] && eval "$r"; }
 ```
 
 ```bash
-ai find all swift files larger than 1MB
+cmd find all swift files larger than 1MB
 # $ find . -name "*.swift" -size +1M
 # (copied to clipboard)
 # Run? [y/N]
 
-ai show disk usage sorted by size
-ai kill whatever is using port 3000
-ai list all git branches merged into main
-ai count lines of code by language
+cmd show disk usage sorted by size
+cmd kill whatever is using port 3000
+cmd list all git branches merged into main
+cmd count lines of code by language
 ```
 
 **[oneliner](./demo/oneliner)** - complex pipe chains from plain English:
