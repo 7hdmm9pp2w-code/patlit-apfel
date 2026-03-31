@@ -31,7 +31,7 @@ Every Mac with Apple Silicon has a **built-in LLM** - Apple's on-device foundati
 |-------------|---------|
 | **Mac** | Apple Silicon (M1 or later) |
 | **macOS** | **macOS 26.4** or later |
-| **Apple Intelligence** | Must be [enabled in System Settings](https://support.apple.com/en-us/108380) |
+| **Apple Intelligence** | Must be [enabled in System Settings](https://support.apple.com/en-us/121115) |
 | **Swift** | Swift 6.2+ (comes with Command Line Tools) |
 | **Xcode** | **NOT required** - Command Line Tools only |
 
