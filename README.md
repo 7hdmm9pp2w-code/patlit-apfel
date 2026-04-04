@@ -325,6 +325,7 @@ apfel --serve                           Start OpenAI-compatible server
 apfel --serve --mcp <server.py>         Server with MCP tools
 apfel --benchmark                       Run internal performance benchmarks
 apfel --model-info                      Print model capabilities
+apfel --update                          Check for updates and upgrade
 ```
 
 **General options** (all modes):
@@ -344,6 +345,7 @@ apfel --model-info                      Print model capabilities
 | `--permissive` | Use permissive content guardrails |
 | `--benchmark` | Run internal performance benchmarks |
 | `--model-info` | Print model capabilities and exit |
+| `--update` | Check for updates and upgrade via Homebrew |
 | `--release` | Show detailed version, build, and capability info |
 | `-v, --version` | Print version |
 | `-h, --help` | Show help |
