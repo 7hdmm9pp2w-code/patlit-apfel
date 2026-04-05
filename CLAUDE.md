@@ -54,8 +54,8 @@ HTTP Server (/v1/*) ───────┘   ContextManager → Transcript API
 
 ## Current Status
 
-- Version source of truth: `.version` (currently `0.8.2`)
-- Tests: `129` unit + `124` integration (full suite ~55 seconds)
+- Version source of truth: `.version` (currently `0.8.3`)
+- Tests: `129` unit + `131` integration (full suite ~55 seconds)
 - Issues `#34` (arrow keys) and `#35` (MCP auto-execute) fixed in v0.8.1
 - GitHub issue `#33` is closed; the landing page example lives in a separate repo
 
@@ -97,7 +97,7 @@ python3 -m pytest Tests/integration/ -v    # release-binary integration tests
 | Security | `Sources/Core/OriginValidator.swift`, `Sources/SecurityMiddleware.swift` |
 | MCP client | `Sources/Core/MCPProtocol.swift`, `Sources/MCPClient.swift` |
 | MCP calculator | `mcp/calculator/server.py` |
-| Tests | `Tests/apfelTests/` (129 unit), `Tests/integration/` (124 integration) |
+| Tests | `Tests/apfelTests/` (129 unit), `Tests/integration/` (131 integration) |
 | Tickets | `open-tickets/` |
 | Docs | `docs/` (brew-install, EXAMPLES, release, tool-calling-guide) |
 
