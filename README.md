@@ -533,6 +533,10 @@ apfel --benchmark -o json                # performance report
 
 Every `make build`/`make install` auto-bumps the patch version, updates the README badge, and generates build metadata (`.version` is the single source of truth).
 
+## Integrations
+
+apfel works with any tool that speaks the OpenAI API. Verified configs: [docs/integrations.md](docs/integrations.md)
+
 ## Related Projects
 
 - [apfel-clip](https://github.com/Arthur-Ficial/apfel-clip) - AI clipboard actions from the menu bar
