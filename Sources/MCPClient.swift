@@ -17,6 +17,7 @@ final class MCPConnection: @unchecked Sendable {
     private let process: Process
     private let stdinPipe: Pipe
     private let stdoutPipe: Pipe
+    private let lineReader: BufferedLineReader
     private let lock = NSLock()
     private var nextId = 1
 
@@ -45,6 +46,7 @@ final class MCPConnection: @unchecked Sendable {
         self.process = proc
         self.stdinPipe = stdinP
         self.stdoutPipe = stdoutP
+        self.lineReader = BufferedLineReader(fileDescriptor: stdoutP.fileHandleForReading.fileDescriptor)
         self.tools = [] // placeholder, filled below
 
         try proc.run()
@@ -118,86 +120,16 @@ final class MCPConnection: @unchecked Sendable {
         stdinPipe.fileHandleForWriting.write(data)
     }
 
-    /// Leftover bytes from a previous buffered read that arrived after a newline.
-    private var readBuffer = Data()
-
     private func sendAndReceive(
         _ message: String,
         timeoutMilliseconds: Int,
         operationDescription: String
     ) throws -> String {
         send(message)
-        var lineBuffer = Data()
-        let fd = stdoutPipe.fileHandleForReading.fileDescriptor
-        let deadline = Date().timeIntervalSinceReferenceDate + (Double(timeoutMilliseconds) / 1000.0)
-
-        // Drain any leftover bytes from the previous read that crossed a message boundary.
-        if let newlineIndex = readBuffer.firstIndex(of: UInt8(ascii: "\n")) {
-            lineBuffer.append(readBuffer[readBuffer.startIndex..<newlineIndex])
-            readBuffer = Data(readBuffer[(newlineIndex + 1)...])
-            if let line = String(data: lineBuffer, encoding: .utf8), !line.isEmpty {
-                return line
-            }
-        } else if !readBuffer.isEmpty {
-            lineBuffer.append(readBuffer)
-            readBuffer = Data()
-        }
-
-        var chunk = [UInt8](repeating: 0, count: 4096)
-
-        while true {
-            let remainingMilliseconds = Int((deadline - Date().timeIntervalSinceReferenceDate) * 1000.0)
-            if remainingMilliseconds <= 0 {
-                throw MCPError.timedOut("\(operationDescription.capitalized) timed out after \(timeoutMilliseconds / 1000)s")
-            }
-
-            var pollDescriptor = pollfd(fd: Int32(fd), events: Int16(POLLIN), revents: 0)
-            let ready = poll(&pollDescriptor, 1, Int32(remainingMilliseconds))
-            if ready == 0 {
-                throw MCPError.timedOut("\(operationDescription.capitalized) timed out after \(timeoutMilliseconds / 1000)s")
-            }
-            if ready < 0 {
-                if errno == EINTR { continue }
-                throw MCPError.processError("Failed waiting for MCP response: \(String(cString: strerror(errno)))")
-            }
-            if (pollDescriptor.revents & Int16(POLLNVAL)) != 0 {
-                throw MCPError.processError("MCP stdout became invalid")
-            }
-            if (pollDescriptor.revents & Int16(POLLERR)) != 0 {
-                throw MCPError.processError("MCP stdout reported an I/O error")
-            }
-            if (pollDescriptor.revents & Int16(POLLHUP)) != 0 && (pollDescriptor.revents & Int16(POLLIN)) == 0 {
-                throw MCPError.processError("MCP server closed unexpectedly")
-            }
-            if (pollDescriptor.revents & Int16(POLLIN)) == 0 {
-                continue
-            }
-
-            let readCount = Darwin.read(fd, &chunk, chunk.count)
-            if readCount == 0 {
-                throw MCPError.processError("MCP server closed unexpectedly")
-            }
-            if readCount < 0 {
-                if errno == EINTR { continue }
-                throw MCPError.processError("Failed reading MCP response: \(String(cString: strerror(errno)))")
-            }
-
-            let bytes = chunk[..<readCount]
-            if let newlineOffset = bytes.firstIndex(of: UInt8(ascii: "\n")) {
-                lineBuffer.append(contentsOf: bytes[bytes.startIndex..<newlineOffset])
-                // Stash anything after the newline for the next call.
-                let afterNewline = bytes.index(after: newlineOffset)
-                if afterNewline < bytes.endIndex {
-                    readBuffer = Data(bytes[afterNewline...])
-                }
-                break
-            }
-            lineBuffer.append(contentsOf: bytes)
-        }
-        guard let line = String(data: lineBuffer, encoding: .utf8), !line.isEmpty else {
-            throw MCPError.processError("Empty response from MCP server")
-        }
-        return line
+        return try lineReader.readLine(
+            timeoutMilliseconds: timeoutMilliseconds,
+            operationDescription: operationDescription
+        )
     }
 }
 
