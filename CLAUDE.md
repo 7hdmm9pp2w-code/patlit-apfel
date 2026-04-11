@@ -59,8 +59,8 @@ HTTP Server (/v1/*) ───────┘   ContextManager → Transcript API
 
 ## Current Status
 
-- Version source of truth: `.version` (currently `0.9.12`)
-- Tests: `218` unit + `191` integration (full suite ~90 seconds)
+- Version source of truth: `.version` (currently `0.9.0`)
+- Tests: `203` unit + `174` integration (full suite ~90 seconds)
 - Issues `#33` through `#45` addressed
 - v0.9.0: The Unification Refactor
   - Shared `processPrompt()` eliminates 5 duplicated code blocks between `singlePrompt()` and `chat()`
@@ -119,7 +119,7 @@ bash scripts/generate-examples.sh          # ~2 minutes, overwrites docs/EXAMPLE
 | Security | `Sources/Core/OriginValidator.swift`, `Sources/SecurityMiddleware.swift` |
 | MCP client | `Sources/Core/MCPProtocol.swift`, `Sources/MCPClient.swift` |
 | MCP calculator | `mcp/calculator/server.py` |
-| Tests | `Tests/apfelTests/` (218 unit), `Tests/integration/` (191 integration) |
+| Tests | `Tests/apfelTests/` (188 unit), `Tests/integration/` (139 integration) |
 | Tickets | `open-tickets/` |
 | Docs | `docs/` (brew-install, EXAMPLES, release, tool-calling-guide) |
 | Scripts | `scripts/generate-examples.sh` (regenerates docs/EXAMPLES.md), `scripts/write-homebrew-formula.sh` |
@@ -228,21 +228,6 @@ apfel --version                        # must show the new version
 - [ ] Homebrew tap updated and `brew test` passes
 - [ ] CLAUDE.md test counts and version updated
 - [ ] File a ticket on `Arthur-Ficial/apfel-web` if the landing page shows test counts
-
-
-## Apple Code Signing
-
-**Signing Identity:** `Developer ID Application: Franz Enzenhofer (7D2YX5DQ6M)`
-**Certificate:** G8S5X23Z3C (expires 2031/04/09)
-**Setup:** `~/dev/apple-dev-id/README.md`
-
-```bash
-# Sign the apfel binary
-codesign --force --sign "Developer ID Application: Franz Enzenhofer (7D2YX5DQ6M)" .build/release/apfel
-
-# Verify
-codesign -dvvv .build/release/apfel
-```
 
 ## CI / GitHub Actions
 
