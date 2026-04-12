@@ -70,22 +70,20 @@ HTTP Server (/v1/*) ───────┘   ContextManager → Transcript API
 ## Build & Test
 
 ```bash
+make test                      # BUILD + ALL TESTS (unit + integration) - the one command you need
 make install                   # build release + install to /usr/local/bin (NO version bump)
 make build                     # build release only (NO version bump)
 make version                   # print current version
 swift build                    # debug build
-swift run apfel-tests          # unit tests (335 tests)
+swift run apfel-tests          # unit tests only (366 tests)
 make preflight                 # full release qualification (unit + integration + policy checks)
 ```
 
+`make test` builds the release binary, runs all 366 unit tests, starts test servers, runs all 220 integration tests, and cleans up. This is the single command for development.
+
+`make install` auto-unlinks Homebrew apfel so the dev binary takes PATH priority. `make uninstall` restores the Homebrew link.
+
 **Version is in `.version` file** (single source of truth). Local builds (`make build`, `make install`) do NOT change the version. Only the release workflow (`make release`) bumps versions. This ensures patch versions mean "published compatible fix", not "someone ran a build". **Never manually edit `.version`, `BuildInfo.swift`, or the README badge** - these are updated atomically by the release workflow.
-
-**Always use `make install` for testing changes** - `swift run` uses a debug build, and the installed binary at `/usr/local/bin/apfel` won't reflect your changes until you run `make install`.
-
-Integration tests (requires server running):
-```bash
-python3 -m pytest Tests/integration/ -v    # release-binary integration tests
-```
 
 Regenerate `docs/EXAMPLES.md` (runs 53 prompts against the installed binary, captures real unedited output):
 ```bash
