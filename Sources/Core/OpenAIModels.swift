@@ -32,19 +32,47 @@ public struct OpenAIMessage: Codable, Sendable, Equatable {
     public let tool_calls: [ToolCall]?
     public let tool_call_id: String?
     public let name: String?
+    public let refusal: String?      // required by OpenAI spec, always null for our model
 
     public init(
         role: String,
         content: MessageContent?,
         tool_calls: [ToolCall]? = nil,
         tool_call_id: String? = nil,
-        name: String? = nil
+        name: String? = nil,
+        refusal: String? = nil
     ) {
         self.role = role
         self.content = content
         self.tool_calls = tool_calls
         self.tool_call_id = tool_call_id
         self.name = name
+        self.refusal = refusal
+    }
+
+    // OpenAI spec requires `content` and `refusal` to always be present in
+    // assistant-role response messages (as null when absent). Swift's
+    // synthesized Encodable omits nil optionals, so we encode manually.
+    // Decoding still uses the synthesized init (content/refusal are Optional).
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(role, forKey: .role)
+        // content: always present (null when nil, string or array when set)
+        if let content = content {
+            try c.encode(content, forKey: .content)
+        } else {
+            try c.encodeNil(forKey: .content)
+        }
+        // These are truly optional per spec — omit when nil
+        try c.encodeIfPresent(tool_calls, forKey: .tool_calls)
+        try c.encodeIfPresent(tool_call_id, forKey: .tool_call_id)
+        try c.encodeIfPresent(name, forKey: .name)
+        // refusal: always present in responses (null when absent)
+        try c.encodeNil(forKey: .refusal)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case role, content, tool_calls, tool_call_id, name, refusal
     }
 
     /// Plain text extracted from any content variant. Returns nil if images are present.

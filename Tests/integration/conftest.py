@@ -11,6 +11,27 @@ import pytest
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 BINARY = ROOT / ".build" / "release" / "apfel"
 MCP_SERVER = ROOT / "mcp" / "calculator" / "server.py"
+OPENAI_SPEC = pathlib.Path(__file__).parent / "openai_spec" / "openapi.yaml"
+
+
+@pytest.fixture(scope="session")
+def openai_spec():
+    """Load the vendored OpenAI API spec for conformance tests.
+
+    The spec is committed at Tests/integration/openai_spec/openapi.yaml
+    so tests are hermetic (no network fetch). Refresh it by re-downloading
+    from https://github.com/openai/openai-openapi.
+    """
+    if not OPENAI_SPEC.exists():
+        pytest.skip(f"OpenAI spec not found at {OPENAI_SPEC}")
+    from openapi_core import Config, OpenAPI
+    # The official OpenAI spec has internal inconsistencies (e.g. logprobs
+    # enum default is [] instead of a string). Skip spec-level validation
+    # since we care about response-level validation, not fixing their YAML.
+    return OpenAPI.from_file_path(
+        str(OPENAI_SPEC),
+        config=Config(spec_validator_cls=None),
+    )
 
 
 def _server_alive(url: str) -> bool:

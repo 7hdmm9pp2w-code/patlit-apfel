@@ -403,7 +403,8 @@ private func benchmarkResponseEncode() async -> BenchmarkCaseResult {
             .init(
                 index: 0,
                 message: OpenAIMessage(role: "assistant", content: .text(String(repeating: "structured output ", count: 24))),
-                finish_reason: "stop"
+                finish_reason: "stop",
+                logprobs: nil
             )
         ],
         usage: .init(prompt_tokens: 1_024, completion_tokens: 256, total_tokens: 1_280)
@@ -641,7 +642,8 @@ private func benchmarkRequestPipelineResult(
             .init(
                 index: 0,
                 message: OpenAIMessage(role: "assistant", content: .text("ok")),
-                finish_reason: "stop"
+                finish_reason: "stop",
+                logprobs: nil
             )
         ],
         usage: .init(prompt_tokens: promptTokens, completion_tokens: 1, total_tokens: promptTokens + 1)

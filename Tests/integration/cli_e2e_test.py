@@ -779,18 +779,13 @@ def test_readme_cli_reference_complete():
     help_flags = set(re.findall(r"--[a-z][-a-z]+", "\n".join(flag_sections)))
     assert help_flags, "Failed to extract any flags from --help output"
 
-    # Read CLI Reference section from README
-    readme_text = (ROOT / "README.md").read_text()
-    cli_ref_match = re.search(
-        r"^## CLI Reference\s*\n(.*?)(?=^## |\Z)",
-        readme_text,
-        re.MULTILINE | re.DOTALL,
-    )
-    assert cli_ref_match, "Could not find '## CLI Reference' section in README.md"
-    cli_reference = cli_ref_match.group(1)
+    # Read CLI Reference from docs/cli-reference.md (moved from README.md)
+    cli_ref_path = ROOT / "docs" / "cli-reference.md"
+    assert cli_ref_path.exists(), "Could not find docs/cli-reference.md"
+    cli_reference = cli_ref_path.read_text()
 
     # Split into the two code blocks: quick-reference (first) and examples (second)
-    code_blocks = re.findall(r"```(?:bash)?\n(.*?)```", cli_reference, re.DOTALL)
+    code_blocks = re.findall(r"```(?:text|bash)?\n(.*?)```", cli_reference, re.DOTALL)
     assert len(code_blocks) >= 2, (
         f"Expected at least 2 code blocks in CLI Reference (quick-ref + examples), found {len(code_blocks)}"
     )

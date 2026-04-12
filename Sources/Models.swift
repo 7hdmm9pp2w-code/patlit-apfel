@@ -38,6 +38,20 @@ struct ChatCompletionResponse: Encodable, Sendable {
         let index: Int
         let message: OpenAIMessage
         let finish_reason: String    // "stop" | "tool_calls" | "length" | "content_filter"
+        let logprobs: String?        // always null for Apple's on-device model
+
+        // OpenAI spec requires `logprobs: null` to be explicitly present.
+        // Swift's synthesized Encodable omits nil optionals, so we encode manually.
+        func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            try c.encode(index, forKey: .index)
+            try c.encode(message, forKey: .message)
+            try c.encode(finish_reason, forKey: .finish_reason)
+            try c.encodeNil(forKey: .logprobs)
+        }
+        private enum CodingKeys: String, CodingKey {
+            case index, message, finish_reason, logprobs
+        }
     }
     struct Usage: Encodable, Sendable {
         let prompt_tokens: Int
@@ -60,6 +74,18 @@ struct ChatCompletionChunk: Encodable, Sendable {
         let index: Int
         let delta: Delta
         let finish_reason: String?
+        let logprobs: String?        // always null for Apple's on-device model
+
+        func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            try c.encode(index, forKey: .index)
+            try c.encode(delta, forKey: .delta)
+            try c.encode(finish_reason, forKey: .finish_reason)
+            try c.encodeNil(forKey: .logprobs)
+        }
+        private enum CodingKeys: String, CodingKey {
+            case index, delta, finish_reason, logprobs
+        }
     }
     struct Delta: Encodable, Sendable {
         let role: String?

@@ -25,7 +25,8 @@ func sseRoleChunk(id: String, created: Int) -> ChatCompletionChunk {
         choices: [.init(
             index: 0,
             delta: .init(role: "assistant", content: nil, tool_calls: nil),
-            finish_reason: nil
+            finish_reason: nil,
+            logprobs: nil
         )],
         usage: nil
     )
@@ -41,7 +42,8 @@ func sseContentChunk(id: String, created: Int, content: String) -> ChatCompletio
         choices: [.init(
             index: 0,
             delta: .init(role: nil, content: content, tool_calls: nil),
-            finish_reason: nil
+            finish_reason: nil,
+            logprobs: nil
         )],
         usage: nil
     )

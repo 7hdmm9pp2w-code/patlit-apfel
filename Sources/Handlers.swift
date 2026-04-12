@@ -245,7 +245,7 @@ private func mcpAutoExecuteResponse(
             sseDataLine(sseContentChunk(id: id, created: created, content: content)),
             sseDataLine(ChatCompletionChunk(
                 id: id, object: "chat.completion.chunk", created: created, model: modelName,
-                choices: [.init(index: 0, delta: .init(role: nil, content: nil, tool_calls: nil), finish_reason: finishReason)],
+                choices: [.init(index: 0, delta: .init(role: nil, content: nil, tool_calls: nil), finish_reason: finishReason, logprobs: nil)],
                 usage: nil
             )),
             sseDataLine(sseUsageChunk(id: id, created: created, promptTokens: promptTokens, completionTokens: completionTokens)),
@@ -276,7 +276,7 @@ private func mcpAutoExecuteResponse(
             object: "chat.completion",
             created: created,
             model: modelName,
-            choices: [.init(index: 0, message: responseMessage, finish_reason: finishReason)],
+            choices: [.init(index: 0, message: responseMessage, finish_reason: finishReason, logprobs: nil)],
             usage: .init(prompt_tokens: promptTokens, completion_tokens: completionTokens,
                          total_tokens: promptTokens + completionTokens)
         )
@@ -360,7 +360,7 @@ private func nonStreamingResponse(
         object: "chat.completion",
         created: created,
         model: modelName,
-        choices: [.init(index: 0, message: responseMessage, finish_reason: finishReason)],
+        choices: [.init(index: 0, message: responseMessage, finish_reason: finishReason, logprobs: nil)],
         usage: .init(prompt_tokens: promptTokens, completion_tokens: completionTokens,
                      total_tokens: promptTokens + completionTokens)
     )
@@ -470,7 +470,8 @@ private func streamingResponse(
                         choices: [.init(
                             index: 0,
                             delta: .init(role: nil, content: nil, tool_calls: chunkToolCalls),
-                            finish_reason: "tool_calls"
+                            finish_reason: "tool_calls",
+                            logprobs: nil
                         )],
                         usage: nil
                     )
@@ -487,7 +488,7 @@ private func streamingResponse(
                     }
                     let stopChunk = ChatCompletionChunk(
                         id: id, object: "chat.completion.chunk", created: created, model: modelName,
-                        choices: [.init(index: 0, delta: .init(role: nil, content: nil, tool_calls: nil), finish_reason: streamFinish)],
+                        choices: [.init(index: 0, delta: .init(role: nil, content: nil, tool_calls: nil), finish_reason: streamFinish, logprobs: nil)],
                         usage: nil
                     )
                     let stopLine = sseDataLine(stopChunk)
