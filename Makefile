@@ -126,12 +126,15 @@ bump-major:
 
 release-patch: check-toolchain bump-patch generate-build-info update-readme
 	swift build -c release
+	@$(MAKE) --no-print-directory generate-man-page
 
 release-minor: check-toolchain bump-minor generate-build-info update-readme
 	swift build -c release
+	@$(MAKE) --no-print-directory generate-man-page
 
 release-major: check-toolchain bump-major generate-build-info update-readme
 	swift build -c release
+	@$(MAKE) --no-print-directory generate-man-page
 
 # --- Generated files ---
 
