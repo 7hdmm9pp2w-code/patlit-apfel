@@ -366,10 +366,12 @@ Everything that grows out of apfel. Each project ships as its own repo, its own 
 
 Built something on top of apfel? Open an issue and it can be added here.
 
-- [https://apfelclaw.yamanlabs.com/](https://apfelclaw.yamanlabs.com/), [https://github.com/julianyaman/apfelclaw](https://github.com/julianyaman/apfelclaw), by [https://github.com/julianYaman](https://github.com/julianYaman) - local AI agent that reads files, calendar, mail, and Mac status via read-only tools
-- [https://github.com/bhaskarvilles/fruit-chat](https://github.com/bhaskarvilles/fruit-chat), by [https://github.com/bhaskarvilles](https://github.com/bhaskarvilles) - "Apple Intelligence in your browser" - browser-based chat UI that talks to `apfel --serve` over the OpenAI-compatible API
-- [https://github.com/lucaspwo/local-claude](https://github.com/lucaspwo/local-claude), by [https://github.com/lucaspwo](https://github.com/lucaspwo) - Claude Code wrapper that swaps in apfel as a local backend via a small Anthropic↔OpenAI proxy; keeps cloud claude untouched
-- [https://github.com/hasit/apfeller](https://github.com/hasit/apfeller), [https://hasit.github.io/apfeller/](https://hasit.github.io/apfeller/), by [https://github.com/hasit](https://github.com/hasit) - app manager for local shell apps built around apfel; browse the [https://hasit.github.io/apfeller/catalog/](https://hasit.github.io/apfeller/catalog/).
+| Project | What it does | Links |
+|---------|-------------|-------|
+| **apfelclaw** by [@julianYaman](https://github.com/julianYaman) | Local AI agent that reads files, calendar, mail, and Mac status via read-only tools | [github](https://github.com/julianyaman/apfelclaw) - [site](https://apfelclaw.yamanlabs.com/) |
+| **fruit-chat** by [@bhaskarvilles](https://github.com/bhaskarvilles) | Browser-based chat UI that talks to `apfel --serve` over the OpenAI-compatible API | [github](https://github.com/bhaskarvilles/fruit-chat) |
+| **local-claude** by [@lucaspwo](https://github.com/lucaspwo) | Claude Code wrapper that swaps in apfel as a local backend via a small Anthropic-OpenAI proxy | [github](https://github.com/lucaspwo/local-claude) |
+| **apfeller** by [@hasit](https://github.com/hasit) | App manager for local shell apps built around apfel | [github](https://github.com/hasit/apfeller) - [site](https://hasit.github.io/apfeller/) - [catalog](https://hasit.github.io/apfeller/catalog/) |
 
 ## Contributing
 
