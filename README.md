@@ -104,7 +104,7 @@ Background service details: [docs/background-service.md](docs/background-service
 
 ### Quick testing chat
 
-`apfel --chat` is a small REPL for testing prompts or MCP servers. For a real chat app, see [apfel-chat](https://github.com/Arthur-Ficial/apfel-chat).
+`apfel --chat` is a small REPL for testing prompts or MCP servers. For a GUI chat app, see [apfel-chat](https://github.com/Arthur-Ficial/apfel-chat).
 
 ```bash
 apfel --chat

@@ -29,7 +29,7 @@ These two modes are what the README.md leads with. Every design decision, test, 
    - Ships because the pieces are already there (Session, ContextManager, tool calling)
    - Handy to kick the tyres on a prompt or a local MCP server without writing a client
    - Should not dominate README real-estate; a short Quick Start entry is enough
-   - For a more sophisticated chat, point users to `apfel-chat` (separate repo)
+   - For a GUI chat app, point users to `apfel-chat` (separate repo)
 
 4. **Swift library** (`import ApfelCore`, first shipped in `1.1.0`) - **a goal, but a secondary surface.**
    - Pure, FoundationModels-free Swift Package library product
