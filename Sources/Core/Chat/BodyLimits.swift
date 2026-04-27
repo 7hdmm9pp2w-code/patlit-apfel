@@ -13,11 +13,16 @@ package enum BodyLimits {
     /// into the 4096-token context window.
     public static let defaultOutputReserveTokens: Int = 512
 
-    /// Default cap applied to model responses when neither the CLI nor the
-    /// HTTP client provides max_tokens. Sized to cover typical short-to-medium
-    /// chat replies and structured JSON output, while leaving 3072 tokens of
-    /// the 4096-token context window for input.
-    /// Read by both surfaces (CLI: main.swift, server: Handlers.swift) so the
-    /// two stay in lock-step.
-    public static let defaultMaxResponseTokens: Int = 1024
+    // No fallback for max_tokens lives here on purpose. Omitted max_tokens
+    // flows through as nil; FoundationModels uses whatever room is left in
+    // the 4096-token window. Output-side overflow is handled by
+    // StreamErrorResolver as finish_reason: "length", so no arbitrary cap
+    // is needed. Drop-in OpenAI semantics, full window utilisation.
+
+    /// Vestigial in v1.3.3+. Omitted max_tokens now flows through as nil and
+    /// FoundationModels uses the remaining context window; this constant is
+    /// no longer consulted anywhere in the codebase. Kept solely for ApfelCore
+    /// API stability for one release, slated for removal in 2.0.0.
+    @available(*, deprecated, message: "No longer used. Omitted max_tokens flows through as nil; FoundationModels uses the remaining 4096-token context window. Output-side overflow is surfaced as finish_reason: \"length\". Will be removed in 2.0.0.")
+    public static let defaultMaxResponseTokens: Int = 0
 }

@@ -238,18 +238,24 @@ func processPrompt(
     debugLog("prompt", "stream=\(stream) retry=\(retryMax) mcp=\(hasMCPTools)")
 
     var content: String
+    var finishReason: FinishReason = .stop
     if stream {
-        content = try await withRetry(maxRetries: retryMax) {
+        let outcome = try await withRetry(maxRetries: retryMax) {
             try await collectStream(session, prompt: prompt, printDelta: printDelta && !hasMCPTools, options: genOpts)
         }
+        content = outcome.content
+        finishReason = outcome.finishReason
     } else {
-        content = try await withRetry(maxRetries: retryMax) {
-            let response = try await session.respond(to: prompt, options: genOpts)
-            return response.content
+        // Route non-streaming through the streaming path too: same overflow
+        // semantics on both paths, no second code path to maintain.
+        let outcome = try await withRetry(maxRetries: retryMax) {
+            try await collectStream(session, prompt: prompt, printDelta: false, options: genOpts)
         }
+        content = outcome.content
+        finishReason = outcome.finishReason
     }
 
-    debugLog("response", "length=\(content.count)")
+    debugLog("response", "length=\(content.count) finish=\(finishReason)")
 
     var toolLog: [ToolLogEntry] = []
     if let result = try await executeMCPToolCallsForCLI(
@@ -259,9 +265,11 @@ func processPrompt(
         content = result.content
         toolLog = result.toolLog.map { ToolLogEntry(name: $0.name, args: $0.args, result: $0.result, isError: $0.isError) }
         debugLog("mcp", "executed \(toolLog.count) tool calls")
+        // After tool re-prompt the model produced a fresh natural reply.
+        finishReason = .stop
     }
 
-    return ProcessPromptResult(content: content, toolLog: toolLog)
+    return ProcessPromptResult(content: content, toolLog: toolLog, finishReason: finishReason)
 }
 
 /// Print tool execution log entries to stderr.
@@ -402,28 +410,53 @@ private func appendExecutedToolResults(
 
 /// Stream a response, optionally printing deltas to stdout.
 /// FoundationModels returns cumulative snapshots; we compute deltas by tracking prev length.
-/// - Returns: The complete response text after all chunks have been received.
+///
+/// Resolves `finishReason` two ways:
+///   - Natural stream completion: `.length` if `completionTokens >= maxTokens`,
+///     else `.stop`. Tool-call detection happens at higher layers.
+///   - Output-side context overflow (model ran into the 4096-token ceiling
+///     after producing content): graceful `.length`. Prompt-side overflow
+///     (no content produced before the throw) still throws.
+///
+/// - Returns: A `StreamOutcome` carrying the accumulated content and the
+///   resolved finish reason.
 func collectStream(
     _ session: LanguageModelSession,
     prompt: String,
     printDelta: Bool,
     options: GenerationOptions = GenerationOptions()
-) async throws -> String {
+) async throws -> StreamOutcome {
     let stream = session.streamResponse(to: prompt, options: options)
     var prev = ""
-    for try await snapshot in stream {
-        let content = snapshot.content
-        if content.count > prev.count {
-            let idx = content.index(content.startIndex, offsetBy: prev.count)
-            let delta = String(content[idx...])
-            if printDelta {
-                print(delta, terminator: "")
-                fflush(stdout)
+    do {
+        for try await snapshot in stream {
+            let content = snapshot.content
+            if content.count > prev.count {
+                let idx = content.index(content.startIndex, offsetBy: prev.count)
+                let delta = String(content[idx...])
+                if printDelta {
+                    print(delta, terminator: "")
+                    fflush(stdout)
+                }
             }
+            prev = content
         }
-        prev = content
+        let completionTokens = await TokenCounter.shared.count(prev)
+        let reason = FinishReasonResolver.resolve(
+            hasToolCalls: false,
+            completionTokens: completionTokens,
+            maxTokens: options.maximumResponseTokens
+        )
+        return StreamOutcome(content: prev, finishReason: reason)
+    } catch {
+        let classified = ApfelError.classify(error)
+        switch StreamErrorResolver.resolve(prev: prev, error: classified) {
+        case .truncated(let content):
+            return StreamOutcome(content: content, finishReason: .length)
+        case .fatal(let err):
+            throw err
+        }
     }
-    return prev
 }
 
 func maxNewestHistoryCountThatFits(
