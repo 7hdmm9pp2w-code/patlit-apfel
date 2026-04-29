@@ -67,6 +67,18 @@ func handleChatCompletion(_ request: Request, context: some RequestContext) asyn
 
     events.append("decoded messages=\(chatRequest.messages.count) stream=\(isStreaming) model=\(chatRequest.model)")
 
+    // patlit-ai: route to non-local backends before FoundationModels
+    let activeBackend = chatRequest.x_backend ?? serverState.config.backend
+    if activeBackend == "medium" || activeBackend == "cloud" {
+        return try await PatliAIRouter.handle(
+            chatRequest: chatRequest,
+            backend: activeBackend,
+            isStreaming: isStreaming,
+            requestBodyString: requestBodyString,
+            events: events
+        )
+    }
+
     // Build context config from request extensions (optional, defaults to newest-first)
     let contextConfig = ContextConfig(
         strategy: chatRequest.x_context_strategy.flatMap { ContextStrategy(rawValue: $0) } ?? .newestFirst,
