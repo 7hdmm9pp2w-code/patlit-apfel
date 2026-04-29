@@ -23,6 +23,7 @@ struct ServerConfig: Sendable {
     let retryEnabled: Bool
     let retryCount: Int
     let permissive: Bool
+    let backend: String  // patlit-ai: "local" | "medium" | "cloud"
 
     var healthRequiresAuthentication: Bool {
         token != nil && !publicHealth && !isLoopbackHost(host)
