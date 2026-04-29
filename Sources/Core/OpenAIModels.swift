@@ -46,6 +46,9 @@ public struct ChatCompletionRequest: Decodable, Sendable, Equatable, Hashable {
     /// Requested token reserve for the model's output.
     public let x_context_output_reserve: Int?
 
+    /// patlit-ai: backend routing — "local" | "medium" | "cloud"
+    public let x_backend: String?
+
     /// Creates a chat-completions request value.
     public init(
         model: String,
@@ -66,7 +69,8 @@ public struct ChatCompletionRequest: Decodable, Sendable, Equatable, Hashable {
         user: String? = nil,
         x_context_strategy: String? = nil,
         x_context_max_turns: Int? = nil,
-        x_context_output_reserve: Int? = nil
+        x_context_output_reserve: Int? = nil,
+        x_backend: String? = nil
     ) {
         self.model = model
         self.messages = messages
@@ -87,6 +91,7 @@ public struct ChatCompletionRequest: Decodable, Sendable, Equatable, Hashable {
         self.x_context_strategy = x_context_strategy
         self.x_context_max_turns = x_context_max_turns
         self.x_context_output_reserve = x_context_output_reserve
+        self.x_backend = x_backend
     }
 }
 
