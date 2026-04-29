@@ -12,7 +12,7 @@ import CReadline
 // MARK: - Configuration
 
 let version = buildVersion
-let appName = "apfel"
+let appName = "patlit-ai"
 let modelName = "apple-foundationmodel"
 
 // MARK: - Exit Codes
@@ -43,6 +43,13 @@ apfel_install_sigint_exit_handler(isatty(STDOUT_FILENO) != 0 ? 1 : 0)
 // MARK: - Argument Parsing
 
 let rawArgs = Array(CommandLine.arguments.dropFirst())
+
+// patlit-ai: API key setup (must run before mode dispatch)
+if rawArgs.first == "--set-api-key", rawArgs.count > 1 {
+    PatliAIKeychain.save(rawArgs[1], service: "patlit-ai", account: "anthropic-api-key")
+    print("API key saved to Keychain.")
+    exit(exitSuccess)
+}
 
 // No-args + stdin-pipe fast path: `echo "prompt" | apfel` with no flags.
 // Must stay above the parse() call because it needs isatty + await singlePrompt
@@ -208,9 +215,27 @@ do {
             publicHealth: parsed.serverPublicHealth,
             retryEnabled: parsed.retryEnabled,
             retryCount: parsed.retryCount,
-            permissive: parsed.permissive
+            permissive: parsed.permissive,
+            backend: parsed.backend
         )
         try await startServer(config: config, mcpManager: mcpManager)
+
+    case .styleCheck:
+        let text: String
+        if parsed.prompt.isEmpty {
+            var lines: [String] = []
+            while let line = readLine(strippingNewline: false) { lines.append(line) }
+            text = lines.joined().trimmingCharacters(in: .whitespacesAndNewlines)
+        } else {
+            text = parsed.prompt
+        }
+        let runner = PatliAIStyleCheckRunner(
+            text: text,
+            channelRaw: parsed.styleCheckChannel,
+            backendRaw: parsed.backend,
+            stream: true
+        )
+        try await runner.run()
 
     case .update:
         performUpdate()
