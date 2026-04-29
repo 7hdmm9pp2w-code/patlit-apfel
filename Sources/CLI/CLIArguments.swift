@@ -25,6 +25,7 @@ public struct CLIArguments: Sendable, Equatable {
         case help
         case version
         case release
+        case styleCheck = "style-check"
 
         /// Whether this mode supports reading piped stdin as prompt input.
         /// Modes that accept a user prompt from the command line also accept
@@ -87,6 +88,11 @@ public struct CLIArguments: Sendable, Equatable {
     public var contextStrategy: ContextStrategy? = nil
     public var contextMaxTurns: Int? = nil
     public var contextOutputReserve: Int? = nil
+
+    // patlit-ai: multi-backend
+    public var backend: String = "local"
+    public var styleCheckChannel: String = "email"
+    public var setAPIKey: String? = nil
 
     public init() {}
 }
@@ -416,6 +422,33 @@ extension CLIArguments {
                     throw CLIErrors.requires("--context-output-reserve", "a positive number")
                 }
                 result.contextOutputReserve = n
+
+            // -- patlit-ai: multi-backend --
+
+            case "--backend":
+                i += 1
+                guard i < args.count else {
+                    throw CLIErrors.requires("--backend", "one of: local|medium|cloud")
+                }
+                result.backend = args[i]
+
+            case "--style-check":
+                context.modeFlagsSeen.append("--style-check")
+                result.mode = .styleCheck
+
+            case "--channel":
+                i += 1
+                guard i < args.count else {
+                    throw CLIErrors.requires("--channel", "one of: website|linkedin|email|schriftsatz")
+                }
+                result.styleCheckChannel = args[i]
+
+            case "--set-api-key":
+                i += 1
+                guard i < args.count else {
+                    throw CLIErrors.requires("--set-api-key", "an Anthropic API key")
+                }
+                result.setAPIKey = args[i]
 
             // -- File attachment --
 
